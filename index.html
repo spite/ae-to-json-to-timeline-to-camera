@@ -35,7 +35,7 @@ function process() {
 	//data.project.items[ 1 ].layers[ 0 ].properties.Transform.Position.keyframes
 	//data.project.items[ 1 ].layers[ 0 ].properties.Transform[ 'X Rotation' ].keyframes
 
-	var scale = 100;
+	var scale = 1000 * 2.54;
 	var origin = transform.Position.keyframes[0][1];
 	origin = origin.map( v => v / scale );
 
@@ -119,7 +119,7 @@ document.getElementById( 'video' ).addEventListener( 'loadeddata', onWindowResiz
 function addSphere( xo, yo, zo ) {
 
 	var mesh = new THREE.Mesh(
-		new THREE.IcosahedronGeometry( 2, 3 ),
+		new THREE.IcosahedronGeometry( .1, 3 ),
 		new THREE.MeshNormalMaterial( { opacity: .1, side: THREE.DoubleSide, shading: THREE.FlatShading, wireframe: true } )
 	);
 	mesh.position.set( xo, yo, zo );
@@ -132,7 +132,7 @@ function addPoints( xo, yo, zo ) {
 	var geometry = new THREE.BufferGeometry();
 
 	var positions = new Float32Array( particles * 3 );
-	var n = 100, n2 = n / 2; // particles spread in the cube
+	var n = 2, n2 = n / 2; // particles spread in the cube
 
 	for ( var i = 0; i < positions.length; i += 3 ) {
 
@@ -151,7 +151,7 @@ function addPoints( xo, yo, zo ) {
 	geometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
 	geometry.computeBoundingSphere();
 
-	var material = new THREE.PointsMaterial( { size: .1 } );
+	var material = new THREE.PointsMaterial( { size: .001 } );
 
 	points = new THREE.Points( geometry, material );
 	scene.add( points );
@@ -188,7 +188,7 @@ function onWindowResize() {
 
 		scene = new THREE.Scene();
 
-		camera = new THREE.PerspectiveCamera( 63.54, window.innerWidth / window.innerHeight, 1, 2000 );
+		camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, .001, 20 );
 		scene.add( camera );
 
 		camera2 = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 2000 );
@@ -217,7 +217,7 @@ function onWindowResize() {
 		positionTimeLine.render( t );
 		orientationTimeLine.render( t );
 
-		cameraDummy.position.copy( camera.position );
+		//cameraDummy.position.copy( camera.position );
 		camera2.lookAt( camera.position );
 
 		renderer.render( scene, camera );
