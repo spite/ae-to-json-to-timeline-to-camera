@@ -27,6 +27,8 @@ var data = null;
 var positionTimeLine = new TimelineMax( { repeat: -1 });
 var orientationTimeLine = new TimelineMax( { repeat: -1 });
 
+var cameraDummy = new THREE.Mesh( new THREE.BoxGeometry( 1,1,1 ), new THREE.MeshNormalMaterial() );
+
 function process() {
 
 	var transform = data.project.items[ 1 ].layers[ 0 ].properties.Transform;
@@ -34,34 +36,39 @@ function process() {
 	//data.project.items[ 1 ].layers[ 0 ].properties.Transform[ 'X Rotation' ].keyframes
 
 	var origin = transform.Position.keyframes[0][1];
-	var scale = 1;
 
-	addPoints( scale * origin[ 0 ],scale * -origin[ 1 ], scale* -origin[ 2 ] );
+	camera2.position.set( origin[ 0 ],-origin[ 1 ], -origin[ 2 ] );
+	addPoints( origin[ 0 ],-origin[ 1 ], -origin[ 2 ] );
+	addSphere( origin[ 0 ],-origin[ 1 ], -origin[ 2 ] );
 
 	positionTimeLine.set(
 		camera.position,
 		{
-			x: scale * origin[0],
-			y: scale * -origin[1],
-			z: scale * -origin[2],
+			x: origin[0],
+			y: -origin[1],
+			z: -origin[2],
 			ease: Linear.easeNone
 		}
 	);
 
 	transform.Position.keyframes.forEach( keyframe => {
 		var time = keyframe[ 0 ];
+		console.log( time );
 		var point = keyframe[ 1 ];
 		positionTimeLine.to(
 			camera.position,
 			time,
 			{
-				x: scale * point[ 0 ],
-				y: scale * -point[ 1 ],
-				z: scale * -point[ 2 ],
+				x: point[ 0 ],
+				y: -point[ 1 ],
+				z: -point[ 2 ],
 				ease: Linear.easeNone
 			}
 		);
 	} );
+
+	var end = transform.Position.keyframes[ transform.Position.keyframes.length - 1 ][ 1 ];
+	addSphere( end[ 0 ],-end[ 1 ], -end[ 2 ] );
 
 	var rotX = data.project.items[ 1 ].layers[ 0 ].properties.Transform[ 'X Rotation' ].keyframes;
 	var rotY = data.project.items[ 1 ].layers[ 0 ].properties.Transform[ 'Y Rotation' ].keyframes
@@ -100,18 +107,28 @@ function process() {
 
 }
 
-var particles = 1000;
+var particles = 10000;
 var points;
 
 document.getElementById( 'video' ).addEventListener( 'loadeddata', onWindowResize );
 
+function addSphere( xo, yo, zo ) {
+
+	var mesh = new THREE.Mesh(
+		new THREE.IcosahedronGeometry( 2, 3 ),
+		new THREE.MeshNormalMaterial( { opacity: .1, side: THREE.DoubleSide, shading: THREE.FlatShading, wireframe: true } )
+	);
+	mesh.position.set( xo, yo, zo );
+
+	scene.add( mesh );
+}
 
 function addPoints( xo, yo, zo ) {
 
 	var geometry = new THREE.BufferGeometry();
 
 	var positions = new Float32Array( particles * 3 );
-	var n = 20, n2 = n / 2; // particles spread in the cube
+	var n = 500, n2 = n / 2; // particles spread in the cube
 
 	for ( var i = 0; i < positions.length; i += 3 ) {
 
@@ -154,7 +171,7 @@ function onWindowResize() {
 
 	var container;
 
-	var scene, camera, renderer, controls;
+	var scene, camera, camera2, renderer, controls;
 	var geometry, mesh, material;
 
 	function init() {
@@ -167,8 +184,13 @@ function onWindowResize() {
 
 		scene = new THREE.Scene();
 
-		camera = new THREE.PerspectiveCamera( 63.54, window.innerWidth / window.innerHeight, 1, 2000 );
+		camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 2000 );
 		scene.add( camera );
+
+		camera2 = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 2000 );
+		scene.add( camera2 );
+
+		scene.add( cameraDummy );
 
 		window.addEventListener( 'resize', onWindowResize, false );
 
@@ -187,9 +209,12 @@ function onWindowResize() {
 
 	function render() {
 
-		var t = video.currentTime;
+		var t = video.currentTime * 100;
 		positionTimeLine.render( t );
 		orientationTimeLine.render( t );
+
+		cameraDummy.position.copy( camera.position );
+		camera2.lookAt( camera.position );
 
 		renderer.render( scene, camera );
 
